@@ -12,7 +12,6 @@ pub enum Definition {
     Div,
     Modulo,
     Command,
-    Empty,
 }
 pub struct Environment {
     pub definitions: HashMap<Definition, Box<dyn Fn(&[lex::Exp]) -> lex::Exp + Send + Sync>>,
@@ -28,7 +27,7 @@ fn map_procs(p: &lex::Atom) -> Definition {
             "command" => Definition::Command,
             &_ => todo!(),
         },
-        _ => Definition::Empty,
+        &_ => todo!(),
     }
 }
 
@@ -39,10 +38,6 @@ impl Default for Environment {
             Box<dyn Fn(&[lex::Exp]) -> lex::Exp + Send + Sync>,
         > = HashMap::new();
 
-        definitions.insert(
-            Definition::Empty,
-            Box::new(|_slice| lex::Exp::Atom(lex::Atom::Number(0))),
-        );
         definitions.insert(Definition::Plus, Box::new(|slice| plus!(slice)));
         definitions.insert(Definition::Minus, Box::new(|slice| minus!(slice)));
         definitions.insert(Definition::Multi, Box::new(|slice| multi!(slice)));
@@ -87,8 +82,12 @@ impl Default for Environment {
 }
 impl Environment {
     pub fn eval(&self, a: &lex::Atom, args: &[lex::Exp]) -> Result<lex::Exp, ()> {
-        let atom = self.definitions.get(&map_procs(a)).unwrap()(&args[0..]);
-        Ok(atom)
+        let val = match args {
+            [] => Ok(lex::Exp::Atom(a.clone())),
+            _ => Ok(self.definitions.get(&map_procs(a)).unwrap()(&args[0..])),
+        };
+
+        val
     }
 }
 lazy_static! {
