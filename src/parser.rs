@@ -18,7 +18,7 @@ fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Vec<Exp>, ()> {
                 l.extend(read_from_tokens(tokens)?);
             }
             tokens.remove(0);
-            Ok(l)
+            Ok(vec![Exp::List(l)])
         }
         ")" => Err(()),
         _ => Ok(vec![Exp::Atom(atom(token))]),

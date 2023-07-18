@@ -13,8 +13,11 @@ pub enum Exp {
 impl Exp {
     pub fn eval(&self, l: &[Exp]) -> Result<Exp, ()> {
         match self {
-            Exp::Atom(a) => ENV.lock().unwrap().eval(a, l),
-            a => Ok(a.clone()),
+            Exp::Atom(a) => match l {
+                [] => Ok(self.clone()),
+                _ => ENV.lock().unwrap().eval(a, l),
+            },
+            a => a.eval(l),
         }
     }
     pub fn print(&self) {
@@ -22,7 +25,15 @@ impl Exp {
             Exp::Atom(Atom::Number(a)) => {
                 println!("{}", a);
             }
-            &_ => todo!(),
+            Exp::Atom(Atom::Float(f)) => {
+                println!("{}", f);
+            }
+            Exp::Atom(Atom::Symbol(s)) => {
+                println!("{}", s);
+            }
+            Exp::List(l) => {
+                println!("{:?}", l);
+            }
         }
     }
 }
