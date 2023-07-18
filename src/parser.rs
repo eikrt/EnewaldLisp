@@ -8,7 +8,7 @@ pub fn parse(program: &str) -> Result<Exp, ()> {
     Ok(Exp::List(rtokens))
 }
 
-fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Vec<Exp>, ()> {
+pub fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Vec<Exp>, ()> {
     let binding = tokens.remove(0);
     let token = binding.as_str();
     match token {
@@ -25,7 +25,7 @@ fn read_from_tokens(tokens: &mut Vec<String>) -> Result<Vec<Exp>, ()> {
     }
 }
 
-fn atom(token: &str) -> Atom {
+pub fn atom(token: &str) -> Atom {
     if let Ok(number) = token.parse::<i64>() {
         Atom::Number(number)
     } else if let Ok(float) = token.parse::<f64>() {

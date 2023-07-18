@@ -1,11 +1,11 @@
 use crate::environment::ENV;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Atom {
     Number(i64),
     Float(f64),
     Symbol(String),
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Exp {
     Atom(Atom),
     List(Vec<Exp>),
@@ -28,13 +28,13 @@ impl Exp {
             .unwrap()
             .eval(&proc.as_atom(), args.as_vec().as_slice())
     }
-    fn as_vec(&self) -> Vec<Exp> {
+    pub fn as_vec(&self) -> Vec<Exp> {
         match self {
             Exp::List(l) => l.clone(),
             Exp::Atom(_) => panic!("Bug"),
         }
     }
-    fn as_atom(&self) -> Atom {
+    pub fn as_atom(&self) -> Atom {
         match self {
             Exp::List(_) => panic!("Bug"),
             Exp::Atom(a) => a.clone(),
