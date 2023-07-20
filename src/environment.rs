@@ -1,4 +1,4 @@
-use crate::lex;
+use crate::lex::{Atom, Exp};
 use crate::{div, minus, modulo, multi, plus};
 use lazy_static::lazy_static;
 use std::collections::HashMap;
@@ -14,11 +14,11 @@ pub enum Definition {
     Command,
 }
 pub struct Environment {
-    pub definitions: HashMap<Definition, Box<dyn Fn(&[lex::Exp]) -> lex::Exp + Send + Sync>>,
+    pub definitions: HashMap<Definition, Box<dyn Fn(&[Exp]) -> Exp + Send + Sync>>,
 }
-fn map_procs(p: &lex::Atom) -> Definition {
+fn map_procs(p: &Atom) -> Definition {
     match p {
-        lex::Atom::Symbol(t) => match t.as_str() {
+        Atom::Symbol(t) => match t.as_str() {
             "+" => Definition::Plus,
             "-" => Definition::Minus,
             "*" => Definition::Multi,
@@ -33,10 +33,8 @@ fn map_procs(p: &lex::Atom) -> Definition {
 
 impl Default for Environment {
     fn default() -> Self {
-        let mut definitions: HashMap<
-            Definition,
-            Box<dyn Fn(&[lex::Exp]) -> lex::Exp + Send + Sync>,
-        > = HashMap::new();
+        let mut definitions: HashMap<Definition, Box<dyn Fn(&[Exp]) -> Exp + Send + Sync>> =
+            HashMap::new();
 
         definitions.insert(Definition::Plus, Box::new(|slice| plus!(slice)));
         definitions.insert(Definition::Minus, Box::new(|slice| minus!(slice)));
@@ -47,18 +45,32 @@ impl Default for Environment {
             Definition::Command,
             Box::new(|slice| {
                 let mut svec: Vec<String> = vec![];
-                let command = match slice.iter().nth(0).unwrap() {
-                    lex::Exp::Atom(a) => match a {
-                        lex::Atom::Symbol(s) => s,
-                        _ => todo!(),
-                    },
-                    _ => todo!(),
-                };
-                for c in slice.iter().skip(1) {
+                let mut cmd = "".to_string();
+                'it: for c in slice.iter() {
                     match c {
-                        lex::Exp::Atom(a) => match a {
-                            lex::Atom::Symbol(s) => svec.push(s.to_string()),
-                            lex::Atom::Number(n) => {
+                        Exp::Atom(a) => match a {
+                            Atom::Symbol(s) => {
+                                match s.chars().nth(0).unwrap() {
+                                    '%' => {
+                                        cmd.push_str(format!(" {} ", &s[1..]).as_str());
+                                        continue 'it;
+                                    }
+                                    _ => {}
+                                };
+                                match s.chars().nth(s.len() - 1).unwrap() {
+                                    '%' => {
+                                        cmd.push_str(format!(" {} ", &s[..s.len() - 1]).as_str());
+                                    }
+                                    _ => {
+                                        if !cmd.is_empty() {
+                                            cmd.push_str(format!(" {}", &s).as_str())
+                                        } else {
+                                            svec.push(s.to_string());
+                                        }
+                                    }
+                                };
+                            }
+                            Atom::Number(n) => {
                                 let string = n.to_string();
                                 svec.push(string)
                             }
@@ -67,11 +79,12 @@ impl Default for Environment {
                         _ => todo!(),
                     }
                 }
-                let stdout = process::Command::new(command)
-                    .args(svec)
+                svec.push(cmd);
+                let stdout = process::Command::new(&svec[0])
+                    .args(&svec[1..])
                     .output()
                     .expect("Failed executing command");
-                lex::Exp::Atom(lex::Atom::Symbol(
+                Exp::Atom(Atom::Symbol(
                     std::str::from_utf8(&stdout.stdout).unwrap().to_string(),
                 ))
             }),
@@ -81,10 +94,10 @@ impl Default for Environment {
     }
 }
 impl Environment {
-    pub fn eval(&self, a: &lex::Atom, args: &[lex::Exp]) -> Result<lex::Exp, ()> {
+    pub fn eval(&self, a: &Atom, args: &[Exp]) -> Result<Exp, ()> {
         let val = match args {
-            [] => Ok(lex::Exp::Atom(a.clone())),
-            _ => Ok(self.definitions.get(&map_procs(a)).unwrap()(&args[0..])),
+            [] => Ok(Exp::Atom(a.clone())),
+            _ => Ok(self.definitions.get(&map_procs(a)).unwrap()(&args)),
         };
 
         val
