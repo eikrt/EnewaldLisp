@@ -1,0 +1,4 @@
+(command convert -size 512x128 xc:orange -fill white -pointsize 8 -gravity center -annotate +0+0 %EnewaldLisp% media/logo.png)
+(command convert -size 100x32 xc:pink -fill white -pointsize 8 -gravity center -annotate +0+0 %Test Coverage 100% media/test_coverage.png)
+(command convert -size 100x32 xc:orange -fill white -pointsize 8 -gravity center -annotate +0+0 %Test Coverage 100% media/benchmark.png)
+(command sh -c %echo ![logo](media/logo.png) ![logo](media/benchmark.png) ![logo](media/test_coverage.png) > README.md%)

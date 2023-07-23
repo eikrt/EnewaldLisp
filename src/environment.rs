@@ -50,20 +50,37 @@ impl Default for Environment {
                     match c {
                         Exp::Atom(a) => match a {
                             Atom::Symbol(s) => {
+                                if s.chars().nth(0).unwrap() == '%'
+                                    && s.chars().nth(s.len() - 1).unwrap() == '%'
+                                {
+                                    cmd.push_str(format!("{} ", &s[1..1]).as_str());
+
+                                    cmd.trim()
+                                        .split(' ')
+                                        .filter(|s| !s.is_empty())
+                                        .collect::<Vec<_>>()
+                                        .join(" ");
+                                    svec.push(cmd.clone());
+                                    cmd = "".to_string();
+                                    continue 'it;
+                                }
                                 match s.chars().nth(0).unwrap() {
                                     '%' => {
-                                        cmd.push_str(format!(" {} ", &s[1..]).as_str());
+                                        cmd.push_str(format!("{} ", &s[1..]).as_str());
                                         continue 'it;
                                     }
                                     _ => {}
                                 };
                                 match s.chars().nth(s.len() - 1).unwrap() {
                                     '%' => {
-                                        cmd.push_str(format!(" {} ", &s[..s.len() - 1]).as_str());
+                                        cmd.push_str(format!("{} ", &s[..s.len() - 1]).as_str());
+
+                                        svec.push(cmd.to_string());
+                                        cmd = "".to_string();
                                     }
                                     _ => {
                                         if !cmd.is_empty() {
-                                            cmd.push_str(format!(" {}", &s).as_str())
+                                            cmd.push_str(format!(" {} ", &s).as_str())
                                         } else {
                                             svec.push(s.to_string());
                                         }
@@ -79,14 +96,32 @@ impl Default for Environment {
                         _ => todo!(),
                     }
                 }
-                svec.push(cmd);
-                let stdout = process::Command::new(&svec[0])
-                    .args(&svec[1..])
+                cmd.trim()
+                    .split(' ')
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                if !cmd.is_empty() {
+                    svec.push(cmd);
+                }
+
+                let bsvec: Vec<_> = svec
+                    .iter()
+                    .map(|s| s.split_whitespace().collect::<Vec<&str>>().join(" "))
+                    .collect();
+
+                let stdout = process::Command::new(&bsvec[0])
+                    .args(&bsvec[1..])
                     .output()
                     .expect("Failed executing command");
-                Exp::Atom(Atom::Symbol(
-                    std::str::from_utf8(&stdout.stdout).unwrap().to_string(),
-                ))
+                let mut rcontent: &[u8] = &[0];
+                if stdout.stdout.is_empty() {
+                    rcontent = stdout.stderr.as_slice();
+                } else {
+                    rcontent = stdout.stdout.as_slice();
+                }
+                let s = std::str::from_utf8(&rcontent).unwrap().trim().to_string();
+                Exp::Atom(Atom::Symbol(s))
             }),
         );
 

@@ -203,7 +203,7 @@ fn test_commands() {
 #[test]
 fn test_write() {
     let mut commands = HashMap::new();
-    commands.insert("command", vec!["sh", "-c", "echo asdf > test.txt"]);
+    commands.insert("command", vec!["sh", "-c", "echo test > test.txt"]);
     for (k, v) in commands {
         let args: Vec<Exp> = v
             .iter()
