@@ -4,9 +4,9 @@ convert -size 512x128 xc:orange -fill white -pointsize 8 -gravity center -annota
 cat << 'EOF' > README.md
 * EnewaldLisp
 
-[logo](media/logo.png)
-[logo](media/benchmark.png)
-[logo](media/test_coverage.png)
+![logo](media/logo.png)
+![logo](media/benchmark.png)
+![logo](media/test_coverage.png)
 
 ** 
 EOF
