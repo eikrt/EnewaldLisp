@@ -1,6 +1,5 @@
 use enewaldlisp::parser;
 use std::env::args;
-use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;

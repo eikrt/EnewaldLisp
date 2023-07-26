@@ -1,3 +1,4 @@
+#![allow(unused_assignments)]
 use crate::lex::{Atom, Exp};
 use crate::{div, minus, modulo, multi, plus};
 use lazy_static::lazy_static;
@@ -45,47 +46,11 @@ impl Default for Environment {
             Definition::Command,
             Box::new(|slice| {
                 let mut svec: Vec<String> = vec![];
-                let mut cmd = "".to_string();
-                'it: for c in slice.iter() {
+                for c in slice.iter() {
                     match c {
                         Exp::Atom(a) => match a {
                             Atom::Symbol(s) => {
-                                if s.chars().nth(0).unwrap() == '%'
-                                    && s.chars().nth(s.len() - 1).unwrap() == '%'
-                                {
-                                    cmd.push_str(format!("{} ", &s[1..1]).as_str());
-
-                                    cmd.trim()
-                                        .split(' ')
-                                        .filter(|s| !s.is_empty())
-                                        .collect::<Vec<_>>()
-                                        .join(" ");
-                                    svec.push(cmd.clone());
-                                    cmd = "".to_string();
-                                    continue 'it;
-                                }
-                                match s.chars().nth(0).unwrap() {
-                                    '%' => {
-                                        cmd.push_str(format!("{} ", &s[1..]).as_str());
-                                        continue 'it;
-                                    }
-                                    _ => {}
-                                };
-                                match s.chars().nth(s.len() - 1).unwrap() {
-                                    '%' => {
-                                        cmd.push_str(format!("{} ", &s[..s.len() - 1]).as_str());
-
-                                        svec.push(cmd.to_string());
-                                        cmd = "".to_string();
-                                    }
-                                    _ => {
-                                        if !cmd.is_empty() {
-                                            cmd.push_str(format!(" {} ", &s).as_str())
-                                        } else {
-                                            svec.push(s.to_string());
-                                        }
-                                    }
-                                };
+                                svec.push(s.to_string());
                             }
                             Atom::Number(n) => {
                                 let string = n.to_string();
@@ -96,22 +61,8 @@ impl Default for Environment {
                         _ => todo!(),
                     }
                 }
-                cmd.trim()
-                    .split(' ')
-                    .filter(|s| !s.is_empty())
-                    .collect::<Vec<_>>()
-                    .join(" ");
-                if !cmd.is_empty() {
-                    svec.push(cmd);
-                }
-
-                let bsvec: Vec<_> = svec
-                    .iter()
-                    .map(|s| s.split_whitespace().collect::<Vec<&str>>().join(" "))
-                    .collect();
-
-                let stdout = process::Command::new(&bsvec[0])
-                    .args(&bsvec[1..])
+                let stdout = process::Command::new(&svec[0])
+                    .args(&svec[1..])
                     .output()
                     .expect("Failed executing command");
                 let mut rcontent: &[u8] = &[0];
