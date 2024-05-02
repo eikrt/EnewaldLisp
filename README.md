@@ -7,6 +7,3 @@ The aim of this project was to create a Turing complete programming language for
 - parsing of s-expressions
 - arithmetic
 - calling external shell scripts
-
-
-** 
